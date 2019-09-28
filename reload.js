@@ -6,16 +6,16 @@ var fs = require('fs');
 //clean files
 fs.writeFile("./public/json/offline.json","[]", function (err) {
   if (err) throw err;
-  console.log('Saved!');
+  console.log('Emptied offline!');
 });
 fs.writeFile("./public/json/online.json","[]", function (err) {
   if (err) throw err;
-  console.log('Saved!');
+  console.log('Emptied online!');
 });
 
 fs.writeFile("./public/json/teaching.json","[]", function (err) {
   if (err) throw err;
-  console.log('Saved!');
+  console.log('Emptied teaching!');
 });
 
 // read files
@@ -41,7 +41,7 @@ function htmlify(content, filename) {
 	// html = facebookify(html, filename)
 	if(filename != '/now'){html = linkify(html, filename)}
 	if(json.data.youtube != null){html=youtubeify(html,json.data.youtube)}
-	htmlfile = "./public/posts/" + filename + ".html"
+	htmlfile = "./public/posts" + filename + ".html"
 	fs.writeFile(htmlfile, html, function (err) {
   if (err) throw err;
   console.log('Saved!');
@@ -55,20 +55,29 @@ function jsonify(object, filelocation) {
 		object.image = 'https://img.youtube.com/vi/' + object.youtube + '/sddefault.jpg'
 	}
 	object.htmlfile = filelocation
-	if (filelocation.includes("tech")) {
-		fs.readFile('json/tech.json', (err, data) => {
+	if (filelocation.includes("offline")) {
+		fs.readFile('./public/json/offline.json', (err, data) => {
 			if (err) throw err;
 			var file = JSON.parse(data)
 			file.push(object)
-			fs.writeFile("json/tech.json",JSON.stringify(file));
+			fs.writeFile("./public/json/offline.json",JSON.stringify(file),(err) => {if (err) throw err});
 		});
 	}
-	if (filelocation.includes("travel")) {
-		fs.readFile('json/travel.json', (err, data) => {
+	if (filelocation.includes("online")) {
+		fs.readFile('./public/json/online.json', (err, data) => {
 			if (err) throw err;
 			var file = JSON.parse(data)
 			file.push(object)
-			fs.writeFile("json/travel.json",JSON.stringify(file));
+			fs.writeFile("./public/json/online.json",JSON.stringify(file),(err) => {if (err) throw err});
+			mapify(object)
+		});
+	}
+	if (filelocation.includes("teaching")) {
+		fs.readFile('public/json/teaching.json', (err, data) => {
+			if (err) throw err;
+			var file = JSON.parse(data)
+			file.push(object)
+			fs.writeFile("./public/json/teaching.json",JSON.stringify(file),(err) => {if (err) throw err});
 			mapify(object)
 		});
 	}
