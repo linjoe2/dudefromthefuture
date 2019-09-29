@@ -334,6 +334,7 @@ span.green{
 .js .search--open .terminal__line:nth-child(3) {
 	animation-duration: 1.35s, 0.1s;
 	animation-timing-function: steps(27, end), ease;
+	animation-delay: 4.85s;
 }
 
 .js .search--open .terminal__line:nth-child(4) {
@@ -853,7 +854,7 @@ tr:nth-child(even) {
 
 #content {
 	width:50%;
-	height:50%;
+	height:30%;
 	top:25%;
 	margin: 0 auto;
 	position: relative;

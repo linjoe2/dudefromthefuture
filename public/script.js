@@ -1,5 +1,11 @@
-
-var width, height, container, canvas, ctx, points, target, animateHeader = true;
+var width,
+  height,
+  container,
+  canvas,
+  ctx,
+  points,
+  target,
+  animateHeader = true;
 
 function init() {
   initHeader();
@@ -11,8 +17,8 @@ function initHeader() {
   width = window.innerWidth;
   height = window.innerHeight;
   target = {
-    x: width /1.4 ,
-    y: height / 3
+    x: width / 1.4,
+    y: height / 3,
   };
 
   container = document.getElementById('connecting-dots');
@@ -27,13 +33,13 @@ function initHeader() {
   points = [];
   for (var x = 0; x < width; x = x + width / 15) {
     for (var y = 0; y < height; y = y + height / 15) {
-      var px = x + Math.random() * width / 50;
-      var py = y + Math.random() * height / 50;
+      var px = x + (Math.random() * width) / 50;
+      var py = y + (Math.random() * height) / 50;
       var p = {
         x: px,
         originX: px,
         y: py,
-        originY: py
+        originY: py,
       };
       points.push(p);
     }
@@ -44,7 +50,7 @@ function initHeader() {
     var closest = [];
     var p1 = points[i];
     for (var j = 0; j < points.length; j++) {
-      var p2 = points[j]
+      var p2 = points[j];
       if (!(p1 == p2)) {
         var placed = false;
         for (var k = 0; k < 5; k++) {
@@ -71,7 +77,11 @@ function initHeader() {
 
   // assign a circle to each point
   for (var i in points) {
-    var c = new Circle(points[i], 2 + Math.random() * 2, 'rgba(255,255,255,0.9)');
+    var c = new Circle(
+      points[i],
+      2 + Math.random() * 2,
+      'rgba(255,255,255,0.9)',
+    );
     points[i].circle = c;
   }
 }
@@ -79,20 +89,24 @@ function initHeader() {
 // Event handling
 function addListeners() {
   if (!('ontouchstart' in window)) {
-  //  window.addEventListener("mousemove", mouseMove);
+    //  window.addEventListener("mousemove", mouseMove);
   }
-  window.addEventListener("resize", resize, true);
-  window.addEventListener("scroll", scrollCheck);
+  window.addEventListener('resize', resize, true);
+  window.addEventListener('scroll', scrollCheck);
 }
 
 function mouseMove(e) {
-  var posx = posy = 0;
+  var posx = (posy = 0);
   if (e.pageX || e.pageY) {
     posx = e.pageX;
     posy = e.pageY;
   } else if (e.clientX || e.clientY) {
-    posx = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
-    posy = e.clientY + document.body.scrollTop + document.documentElement.scrollTop;
+    posx =
+      e.clientX +
+      document.body.scrollLeft +
+      document.documentElement.scrollLeft;
+    posy =
+      e.clientY + document.body.scrollTop + document.documentElement.scrollTop;
   }
   target.x = posx;
   target.y = posy;
@@ -152,7 +166,7 @@ function shiftPoint(p) {
     ease: Circ.easeInOut,
     onComplete: function() {
       shiftPoint(p);
-    }
+    },
   });
 }
 
@@ -194,282 +208,304 @@ function getDistance(p1, p2) {
 
 init();
 
+(function(window) {
+  'use strict';
 
-;(function(window) {
+  //FIND IP
 
-	'use strict';
+  function findIP(onNewIP) {
+    //  onNewIp - your listener function for new IPs
+    var myPeerConnection =
+      window.RTCPeerConnection ||
+      window.mozRTCPeerConnection ||
+      window.webkitRTCPeerConnection; //compatibility for firefox and chrome
+    var pc = new myPeerConnection({iceServers: []}),
+      noop = function() {},
+      localIPs = {},
+      ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/g,
+      key;
 
-		//FIND IP
+    function ipIterate(ip) {
+      if (!localIPs[ip]) onNewIP(ip);
+      localIPs[ip] = true;
+    }
+    pc.createDataChannel(''); //create a bogus data channel
+    pc.createOffer(function(sdp) {
+      sdp.sdp.split('\n').forEach(function(line) {
+        if (line.indexOf('candidate') < 0) return;
+        line.match(ipRegex).forEach(ipIterate);
+      });
+      pc.setLocalDescription(sdp, noop, noop);
+    }, noop); // create offer and set local description
+    pc.onicecandidate = function(ice) {
+      //listen for candidate events
+      if (
+        !ice ||
+        !ice.candidate ||
+        !ice.candidate.candidate ||
+        !ice.candidate.candidate.match(ipRegex)
+      )
+        return;
+      ice.candidate.candidate.match(ipRegex).forEach(ipIterate);
+    };
+  }
 
-		function findIP(onNewIP) { //  onNewIp - your listener function for new IPs
-		  var myPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection; //compatibility for firefox and chrome
-		  var pc = new myPeerConnection({iceServers: []}),
-		    noop = function() {},
-		    localIPs = {},
-		    ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/g,
-		    key;
+  function addIP(ip) {
+    console.log('got ip: ', ip);
 
-		  function ipIterate(ip) {
-		    if (!localIPs[ip]) onNewIP(ip);
-		    localIPs[ip] = true;
-		  }
-		  pc.createDataChannel(""); //create a bogus data channel
-		  pc.createOffer(function(sdp) {
-		    sdp.sdp.split('\n').forEach(function(line) {
-		      if (line.indexOf('candidate') < 0) return;
-		      line.match(ipRegex).forEach(ipIterate);
-		    });
-		    pc.setLocalDescription(sdp, noop, noop);
-		  }, noop); // create offer and set local description
-		  pc.onicecandidate = function(ice) { //listen for candidate events
-		    if (!ice || !ice.candidate || !ice.candidate.candidate || !ice.candidate.candidate.match(ipRegex)) return;
-		    ice.candidate.candidate.match(ipRegex).forEach(ipIterate);
-		  };
-		}
+    var theIp = document.getElementById('ip');
+    var theConsole = $('span.console');
+    var texted = ip;
 
-function addIP(ip) {
-  console.log('got ip: ', ip);
+    theIp.textContent = ip;
 
-	var theIp = document.getElementById('ip');
-	var theConsole = $('span.console');
-	var texted = ip;
+    theConsole.html(texted);
+  }
 
-  theIp.textContent = ip;
+  findIP(addIP);
 
+  //FIND LOCATIOn
 
-
-	theConsole.html(texted);
-
-}
-
-findIP(addIP);
-
-//FIND LOCATIOn
-
-
-$.getJSON('https://ipapi.co/'+$(ip).val()+'/json', function(data){
-
-      $('.country').text(data.country);
+  $.getJSON('https://ipapi.co/' + $(ip).val() + '/json', function(data) {
+    $('.country').text(data.country);
   });
 
+  (function() {
+    var theConsole = $('span.console');
+    var texted = $('#ip').text();
 
-	(function() {
+    theConsole.html(texted);
+  });
 
-		var theConsole = $('span.console');
-		var texted = $("#ip").text();
+  var search_form = document.getElementsByClassName('search__form');
+  console.log(search_form);
 
-		theConsole.html(texted);
-	});
-
-var search_form = document.getElementsByClassName('search__form');
-console.log(search_form);
-
-// scroll fix
-function scrollBottom() {
-	$('.terminal').scrollTop($('.terminal')[0].scrollHeight);
-}
-
-function createAbout(){
-		var binder = $('input').val();
-		var terminal_div = document.getElementsByClassName('terminal');
-		$('.terminal').addClass("binding");
-		
-		var about = ['Name: Chip Theodore','Physical skills: Woodworking, 3D printing/lasercutting, Solderking, Arduino, User experience expert','Computer skills: Linux enthousiast, Node.js Medior Developer, Devops','Socialskills: teacher, workshops and NLP coach certified']
-		for(var i=0;i<about.length;i++){	
-			var commands = document.createElement('p');
-					commands.innerHTML = (about[i]);
-					commands.setAttribute('class', 'terminal__line');
-			$(commands).appendTo(terminal_div);	
-		};
-		setTimeout(function(){
-		scrollBottom();
-		},500)
-
-
-
-
-}
-
-function createServices(){
-		var binder = $('input').val();
-		var terminal_div = document.getElementsByClassName('terminal');
-		$('.terminal').addClass("binding");
-		
-		var services = ['A beter question would be "what do you need?"','With years of creative problem solving experience,','I like to take challanges. Work smart and effective.','As you can see in my projects, I do alot of diffrent stuff, but there is 1 thing in common:','all off them are a part of our coming future.','teaching and creating the technology of tomorrow.',"come with an idea and a budget, and be suprised by the possibility's","<a href='#' class='contact'>contact</a>"]
-		for(var i=0;i<services.length;i++){	
-			var commands = document.createElement('p');
-					commands.innerHTML = (services[i]);
-					commands.setAttribute('class', 'terminal__line');
-			$(commands).appendTo(terminal_div);	
-		};
-		
-		setTimeout(function(){
-		scrollBottom();
-		},500)
-
-
-}
-
-
-function createContact(){
-		var binder = $('input').val();
-		var terminal_div = document.getElementsByClassName('terminal');
-		$('.terminal').addClass("binding");
-		
-		var contact = ['Ah yes, lets grab some spacetime coffee soon,','give me a call: <a href="tel:+31638735126">+31638735126</a>','or send me an email: <a href="mailto:hello@dudefromthefuture.com">hello@dudefromthefuture.com</a>']
-		for(var i=0;i<contact.length;i++){	
-			var commands = document.createElement('p');
-					commands.innerHTML = (contact[i]);
-					commands.setAttribute('class', 'terminal__line');
-
-			$(commands).appendTo(terminal_div);	
-		};
-		setTimeout(function(){
-			scrollBottom();
-		},500)
-
-
-	}
-
-function createProjects(){
-		var binder = $('input').val();
-		var terminal_div = document.getElementsByClassName('terminal');
-		$('.terminal').addClass("binding");
-			
-			//place titles
-			// get json of all 3
-			// what is the max array.length
-			// for loop max array.length 
-				//place item in row if !!array[i] === 0
-
-			var commands = document.createElement('p');
-					commands.innerHTML = ('<table><tr><th>Online</th><th>Offline</th><th>Teaching</th></tr>');
-					commands.setAttribute('class', 'table');
-
-			$(commands).appendTo(terminal_div);	
-		
-		setTimeout(function(){
-			scrollBottom();
-		},500)
-
- 
-}
-
-function createTravel(){
-
-  var homeDiv = document.createElement('div');
-        homeDiv.innerHTML = '<div class="home_container"><iframe src="http://this.sheep.rocks"></iframe><div class="close_home" href="">x</div></div>';
-        homeDiv.setAttribute('class', 'home');
-        document.body.appendChild(homeDiv);
-
-        $('.close_home').click(function(){
-            $('.home').remove();
-            console.log('Home Erased');
-        });
-
-
-}
-
-
-var navigationLink = $('.terminal__line a');
-
-navigationLink.click(function(e){
-	console.log('testttt')
-  if ($(this).hasClass('github')) {
-	window.open('https://github.com/linjoe2')
-  }else if($(this).hasClass('about')) {
-	  createAbout();
-  }else if ($(this).hasClass('travel')){
- 	createTravel(); 
-  }else if ($(this).hasClass('projects')) {
-	  createProjects();
-}else if ($(this).hasClass('contact')) {
-	createContact();
-}else if ($(this).hasClass('services')) {
-	createServices();
-}else
-  {
-  location.reload();
+  // scroll fix
+  function scrollBottom() {
+    $('.terminal').scrollTop($('.terminal')[0].scrollHeight);
   }
-});
 
+  function createAbout() {
+    var binder = $('input').val();
+    var terminal_div = document.getElementsByClassName('terminal');
+    $('.terminal').addClass('binding');
 
+    var about = [
+      'Name: Chip Theodore',
+      'Physical skills: Woodworking, 3D printing/lasercutting, Solderking, Arduino, User experience expert',
+      'Computer skills: Linux enthousiast, Node.js Medior Developer, Devops',
+      'Socialskills: teacher, workshops and NLP coach certified',
+    ];
+    for (var i = 0; i < about.length; i++) {
+      var commands = document.createElement('p');
+      commands.innerHTML = about[i];
+      commands.setAttribute('class', 'terminal__line');
+      $(commands).appendTo(terminal_div);
+    }
+    setTimeout(function() {
+      scrollBottom();
+    }, 500);
+  }
 
-	$(search_form).submit(function( event ) {
-		scrollBottom();	
-	  if ( 'services' === $( "input" ).val() || 'service' === $( "input" ).val()) {
-    		createServices();
-	  }else if('home' === $('input').val()){
-		location.reload();
-	  }else if( $('input').val() === 'travel' || $('input').val() === 'travelblog') {
-	  	createTravel();
-	  }else if( $('input').val() === 'project' || $('input').val() === 'projects') {
-	  	createProjects();
-	  }else if( $('input').val() === 'about' || $('input').val() === 'aboutme') {
-	 	createAbout(); 
-	  }else if( $('input').val() === "contact") {
-		createContact(); 
-	  }else if( $('input').val() ==="github") {
-	 	window.open('https://github.com/linjoe') 
-	  }else if ( $( "input" ).val() === "instagram" ) {
-				window.open('http://instagram.com/outerbassship');
-  		} else if ($( "input" ).val() === "ipconfig") {
+  function createServices() {
+    var binder = $('input').val();
+    var terminal_div = document.getElementsByClassName('terminal');
+    $('.terminal').addClass('binding');
 
-        var binder = $('input').val();
-        var terminal_div = document.getElementsByClassName('terminal');
-            $('.terminal').addClass("binding");
-        var theipagain = $('#ip').html();
+    var services = [
+      'A beter question would be "what do you need?"',
+      'With years of creative problem solving experience,',
+      'I like to take challanges. Work smart and effective.',
+      'As you can see in my projects, I do alot of diffrent stuff, but there is 1 thing in common:',
+      'all off them are a part of our coming future.',
+      'teaching and creating the technology of tomorrow.',
+      "come with an idea and a budget, and be suprised by the possibility's",
+      "<a href='#' class='contact'>contact</a>",
+    ];
+    for (var i = 0; i < services.length; i++) {
+      var commands = document.createElement('p');
+      commands.innerHTML = services[i];
+      commands.setAttribute('class', 'terminal__line');
+      $(commands).appendTo(terminal_div);
+    }
 
-        var ipconfig = document.createElement('p');
-              $(ipconfig).text('ipconfig: ' + theipagain);
-              ipconfig.setAttribute('class', 'terminal__line');
-              $(ipconfig).appendTo(terminal_div);
-              console.log(ipconfig.length);
+    setTimeout(function() {
+      scrollBottom();
+    }, 500);
+  }
 
-      }
+  function createContact() {
+    var binder = $('input').val();
+    var terminal_div = document.getElementsByClassName('terminal');
+    $('.terminal').addClass('binding');
 
-		var binder = $('input').val();
-		var terminal_div = document.getElementsByClassName('terminal');
-				$('.terminal').addClass("binding");
+    var contact = [
+      'Ah yes, lets grab some spacetime coffee soon,',
+      'give me a call: <a href="tel:+31638735126">+31638735126</a>',
+      'or send me an email: <a href="mailto:hello@dudefromthefuture.com">hello@dudefromthefuture.com</a>',
+    ];
+    for (var i = 0; i < contact.length; i++) {
+      var commands = document.createElement('p');
+      commands.innerHTML = contact[i];
+      commands.setAttribute('class', 'terminal__line');
 
-		var commands = document.createElement('p');
-					commands.innerHTML = ('Execute: ' + binder);
-					commands.setAttribute('class', 'terminal__line');
-					$(commands).appendTo(terminal_div);
+      $(commands).appendTo(terminal_div);
+    }
+    setTimeout(function() {
+      scrollBottom();
+    }, 500);
+  }
 
+  function createProjects() {
+    var binder = $('input').val();
+    var terminal_div = document.getElementsByClassName('terminal');
+    $('.terminal').addClass('binding');
+     var commands = document.createElement('p');
+    	commands.innerHTML ='<table><tr><th>Online</th><th>Offline</th><th>Teaching</th></tr>';
+    	commands.setAttribute('class', 'table');
 
+	$(commands).appendTo(terminal_div);
+    //place titles
+    // get json of all 3
+    // what is the max array.length
+    // for loop max array.length
+    //place item in row if !!array[i] === 0
+    $.getJSON('json/offline.json', function(data) {
+      var items = [];
+      
+     
+      
+      $.each(data, function(key, val) {
+    	var commands = document.createElement('p');
+	console.log(val)
+    	commands.innerHTML ='<tr><th>'+ key +'</th><th>'+ val +'</th><th>Teaching</th></tr>';
+    	commands.setAttribute('class', 'table');
 
+    $(commands).appendTo(terminal_div);
 
+    
+      });
+ 
+    });
+        setTimeout(function() {
+      scrollBottom();
+    }, 500);
+  }
 
-	  event.preventDefault();
-	  $('input').val('');
-});
+  function createTravel() {
+    var homeDiv = document.createElement('div');
+    homeDiv.innerHTML =
+      '<div class="home_container"><iframe src="http://this.sheep.rocks"></iframe><div class="close_home" href="">x</div></div>';
+    homeDiv.setAttribute('class', 'home');
+    document.body.appendChild(homeDiv);
 
-// timer
+    $('.close_home').click(function() {
+      $('.home').remove();
+      console.log('Home Erased');
+    });
+  }
 
+  var navigationLink = $('.terminal__line a');
 
-function timer() {
-  var d = new Date();
-  var n = d.getFullYear() + 200;
-  var t	=  d.getHours() + '<span class="blink">:</span>'  +  d.getMinutes() + '<span class="blink">:</span>' + d.getSeconds() + '  ' + d.getUTCDate() + '/' + d.getMonth() + '/' + n
+  navigationLink.click(function(e) {
+    console.log('testttt');
+    if ($(this).hasClass('github')) {
+      window.open('https://github.com/linjoe2');
+    } else if ($(this).hasClass('about')) {
+      createAbout();
+    } else if ($(this).hasClass('travel')) {
+      createTravel();
+    } else if ($(this).hasClass('projects')) {
+      createProjects();
+    } else if ($(this).hasClass('contact')) {
+      createContact();
+    } else if ($(this).hasClass('services')) {
+      createServices();
+    } else {
+      location.reload();
+    }
+  });
 
-  document.getElementById("timer").innerHTML = t;
-}
+  $(search_form).submit(function(event) {
+    scrollBottom();
+    if ('services' === $('input').val() || 'service' === $('input').val()) {
+      createServices();
+    } else if ('home' === $('input').val()) {
+      location.reload();
+    } else if (
+      $('input').val() === 'travel' ||
+      $('input').val() === 'travelblog'
+    ) {
+      createTravel();
+    } else if (
+      $('input').val() === 'project' ||
+      $('input').val() === 'projects'
+    ) {
+      createProjects();
+    } else if ($('input').val() === 'about' || $('input').val() === 'aboutme') {
+      createAbout();
+    } else if ($('input').val() === 'contact') {
+      createContact();
+    } else if ($('input').val() === 'github') {
+      window.open('https://github.com/linjoe');
+    } else if ($('input').val() === 'instagram') {
+      window.open('http://instagram.com/outerbassship');
+    } else if ($('input').val() === 'ipconfig') {
+      var binder = $('input').val();
+      var terminal_div = document.getElementsByClassName('terminal');
+      $('.terminal').addClass('binding');
+      var theipagain = $('#ip').html();
 
-setInterval(function(){
-timer()
-},1000);
+      var ipconfig = document.createElement('p');
+      $(ipconfig).text('ipconfig: ' + theipagain);
+      ipconfig.setAttribute('class', 'terminal__line');
+      $(ipconfig).appendTo(terminal_div);
+      console.log(ipconfig.length);
+    }
 
-// focus input
+    var binder = $('input').val();
+    var terminal_div = document.getElementsByClassName('terminal');
+    $('.terminal').addClass('binding');
 
-$('.search--open').click(function() {
+    var commands = document.createElement('p');
+    commands.innerHTML = 'Execute: ' + binder;
+    commands.setAttribute('class', 'terminal__line');
+    $(commands).appendTo(terminal_div);
+
+    event.preventDefault();
+    $('input').val('');
+  });
+
+  // timer
+
+  function timer() {
+    var d = new Date();
+    var n = d.getFullYear() + 200;
+    var t =
+      d.getHours() +
+      '<span class="blink">:</span>' +
+      d.getMinutes() +
+      '<span class="blink">:</span>' +
+      d.getSeconds() +
+      '  ' +
+      d.getUTCDate() +
+      '/' +
+      d.getMonth() +
+      '/' +
+      n;
+
+    document.getElementById('timer').innerHTML = t;
+  }
+
+  setInterval(function() {
+    timer();
+  }, 1000);
+
+  // focus input
+
+  $('.search--open').click(function() {
     $('#search__input').focus();
-});
+  });
 
-
-// close button
-
-
-
-
+  // close button
 })(window);
