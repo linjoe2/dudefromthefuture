@@ -846,9 +846,8 @@ tr:nth-child(even) {
 	background:#161c24;
 	width: 100vw;
 	height: 100vh;
-  -webkit-animation: cssAnimation 5s forwards; 
-  animation: cssAnimation 5s forwards;
-  align:center;
+  -webkit-animation: cssAnimation 3s forwards; 
+  animation: cssAnimation 3s forwards;
 }
 
 #content {
@@ -857,7 +856,6 @@ tr:nth-child(even) {
 	top:25%;
 	margin: 0 auto;
 	position: relative;
-	text-align:center;
 }
 @keyframes cssAnimation {
     0%   {opacity: 1;}
@@ -871,15 +869,21 @@ tr:nth-child(even) {
 }
 
 .logo_svg{
-	fill: #00b8a9;
+	color: green;
+	fill: green;
+}
+.logo_path{
+	stroke-dasharray: 1000;
+	stroke-dashoffset: 1000;
+	stroke-color: blue;
+	animation: dash 12s linear forwards;
 }
 
-@keyframes bounce { 
-  0% { transform: translateY(0); }
-  100% { transform: translateY(-10px); }
+@keyframes dash {
+  to {
+    stroke-dashoffset: 0;
+  }
 }
-.content_text {
-  animation: bounce 0.8s;
-  animation-direction: alternate;
-  animation-iteration-count: infinite;
-}
+
+
+
