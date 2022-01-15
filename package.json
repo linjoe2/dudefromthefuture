@@ -11,7 +11,7 @@
   "dependencies": {
     "fs": "0.0.1-security",
     "gray-matter": "^4.0.2",
-    "marked": "^0.7.0",
+    "marked": "^4.0.10",
     "node-dir": "^0.1.17",
     "typed.js": "^2.0.10",
     "xterm": "^4.0.1"
